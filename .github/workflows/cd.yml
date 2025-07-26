@@ -35,7 +35,7 @@ jobs:
       run: |
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/iris-api:latest
 
-    - name: Configure kubectl
+    - name: Configure kubectrl
       run: |
         gcloud container clusters get-credentials ${{ secrets.GCP_CLUSTER_NAME }} --region ${{ secrets.GCP_REGION }}
 
