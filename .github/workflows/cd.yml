@@ -1,45 +1,33 @@
-name: CD to GKE via CML
+name: Deploy Iris API to GKE
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
       with:
-        python-version: "3.10"
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-    - name: Set up Google Cloud
+    - name: Set up gcloud CLI
       uses: google-github-actions/setup-gcloud@v2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: ${{ secrets.GCP_PROJECT }}
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        install_components: 'gke-gcloud-auth-plugin'
 
-    - name: Configure Docker
+    - name: Configure kubectl
       run: |
-        gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+        gcloud container clusters get-credentials ${{ secrets.GCP_CLUSTER_NAME }} --region ${{ secrets.GCP_REGION }}
 
-    - name: Build and tag Docker image
+    - name: Deploy to GKE
       run: |
-        docker build -t iris-api ./app
-        docker tag iris-api ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/my-repo/iris-api:latest
-
-    - name: Pushed Docker image
-      run: |
-        docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/my-repo/iris-api:latest
-
-    - name: Get GKE credentials
-      run: |
-        gcloud container clusters get-credentials ${{ secrets.GCP_CLUSTER_NAME }} --zone ${{ secrets.GCP_REGION }}
-
-    - name: Deploy to GKE (update image)
-      run: |
-        kubectl set image deployment/iris-deployment iris-api=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/my-repo/iris-api:latest
+        kubectl set image deployment/iris-deployment iris-api=gcr.io/${{ secrets.GCP_PROJECT_ID }}/iris-api:latest
