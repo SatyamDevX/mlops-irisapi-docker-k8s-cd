@@ -32,7 +32,7 @@ jobs:
         docker build -t iris-api ./app
         docker tag iris-api ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/my-repo/iris-api:latest
 
-    - name: Push Docker image
+    - name: Pushed Docker image
       run: |
         docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/my-repo/iris-api:latest
 
